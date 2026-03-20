@@ -12,34 +12,33 @@ import UIKit
 // MARK: - ═══════════════════════════════════════════════════════════════════
 // MARK: 理论深挖（弹簧 · PhaseAnimator · 性能）
 // MARK: ═══════════════════════════════════════════════════════════════════
-//
+/*
 // 【1】弹簧底层数学（与 mass / stiffness / damping 的关系）
-//
-// 二阶系统：m·x'' + c·x' + k·x = 0
-//   m = 质量，k = 刚度，c = 阻尼
-//
-// 无阻尼固有角频率：ω₀ = √(k/m)  → k↑ 或 m↓ 都会让振荡更快（更“硬”、更轻）
-// 阻尼比：ζ = c / (2√(mk))
-//   ζ < 1 欠阻尼：过冲、振荡（Q 弹、点赞感）
-//   ζ = 1 临界阻尼：最快无振荡回到目标
-//   ζ > 1 过阻尼： sluggish，像糖浆
-//
-// SwiftUI `.interpolatingSpring(mass:stiffness:damping:)` 直接暴露 m,k,c，
-// 视觉直觉：刚度大 = 更“绷”、周期短；阻尼小 = 晃得久；质量大 = 惯性大、回弹慢。
-//
-// `.spring(response:dampingFraction:)` 是另一套参数化：response≈2π/ω（时间尺度），
-// dampingFraction 对应 ζ 的体感（0~1 欠阻尼→临界）。二者可由设计目标互推。
-//
-// 【2】PhaseAnimator 状态流转
-//
-// `PhaseAnimator(phases:trigger:content:animation:)`：
-//   - `phases`：有序相位数组，动画按序从 phase[i] → phase[i+1]。
-//   - `trigger` 变化时：从 phases.first 重新跑完全程（可用来实现「每次点击一套连招」）。
-//   - `animation:` 闭包按**目标相位**返回 Transaction/Animation，故每一段的曲线可不同
-//     （例如第一段大弹性、第二段快速压扁、第三段柔和归位）。
-//   - 与 `animation` 修饰符栈的区别：PhaseAnimator 把「多段动画」声明为数据（phases），
-//     状态机清晰，避免嵌套 withAnimation 与相对时间心智负担。
-//
+ 
+ 二阶系统：m·x'' + c·x' + k·x = 0
+   m = 质量，k = 刚度，c = 阻尼
+ 
+ 无阻尼固有角频率：ω₀ = √(k/m)  → k↑ 或 m↓ 都会让振荡更快（更“硬”、更轻）
+ 阻尼比：ζ = c / (2√(mk))
+   ζ < 1 欠阻尼：过冲、振荡（Q 弹、点赞感）
+   ζ = 1 临界阻尼：最快无振荡回到目标
+   ζ > 1 过阻尼： sluggish，像糖浆
+ 
+ SwiftUI `.interpolatingSpring(mass:stiffness:damping:)` 直接暴露 m,k,c，
+ 视觉直觉：刚度大 = 更“绷”、周期短；阻尼小 = 晃得久；质量大 = 惯性大、回弹慢。
+ 
+ `.spring(response:dampingFraction:)` 是另一套参数化：response≈2π/ω（时间尺度），
+ dampingFraction 对应 ζ 的体感（0~1 欠阻尼→临界）。二者可由设计目标互推。
+*/
+/* 【2】PhaseAnimator 状态流转
+`PhaseAnimator(phases:trigger:content:animation:)`：
+- `phases`：有序相位数组，动画按序从 phase[i] → phase[i+1]。
+- `trigger` 变化时：从 phases.first 重新跑完全程（可用来实现「每次点击一套连招」）。
+- `animation:` 闭包按目标相位返回 Transaction/Animation，故每一段的曲线可不同
+    （例如第一段大弹性、第二段快速压扁、第三段柔和归位）。
+- 与 `animation` 修饰符栈的区别：PhaseAnimator 把「多段动画」声明为数据（phases），
+    状态机清晰，避免嵌套 withAnimation 与相对时间心智负担。
+*/
 // 【3】SwiftUI 如何扛住高频动画（性能要点）
 //
 //   - 属性图（AttributeGraph）做依赖追踪：仅当驱动动画的 @State 变化时，标记脏节点；
@@ -75,6 +74,15 @@ struct AnimationShowcaseRoot: View {
                 NavigationLink("📊 Charts · 折线/柱/扇区 + 手势与无障碍") {
                     ChartVisualizationDemo()
                 }
+                NavigationLink("🧩 组合 UI · MatchedGeometry · Transaction · 转场 · 手势") {
+                    AdvancedCompositionAnimationDemo()
+                }
+                NavigationLink("📱 App Store 风格 · 共享元素进出场") {
+                    AppStoreStyleTransitionDemo()
+                }
+                NavigationLink("📖 阅读器 / AI 消息 · MD · 代码 · 公式") {
+                    AdvancedReaderRendererDemo()
+                }
                 Section {
                     TheoryNotesExpandable()
                 } header: {
@@ -108,6 +116,8 @@ private struct TheoryNotesExpandable: View {
         PhaseAnimator：trigger 触发后按 phases 顺序过渡，每段可指定不同 animation，等价于结构化状态机。
 
         性能：AttributeGraph 增量更新；transform/opacity 常走合成层；body 保持轻量。
+
+        组合 UI：matchedGeometryEffect 做共享元素；Transaction 控制子树是否参与动画；AnyTransition 管显隐；手势在 onChanged 跟手、onEnded 弹簧。详见「组合 UI」演示页。
         """
     }
 }

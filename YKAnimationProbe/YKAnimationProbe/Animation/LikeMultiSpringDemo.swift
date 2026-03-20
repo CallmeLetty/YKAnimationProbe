@@ -60,8 +60,8 @@ private enum LikePhase: CaseIterable, Equatable {
     var scale: CGFloat {
         switch self {
         case .neutral: return 1.0
-        case .blowUp: return 1.45
-        case .shrink: return 0.88
+        case .blowUp: return 2
+        case .shrink: return 0.5
         case .settle: return 1.0
         }
     }
