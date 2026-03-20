@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AADF703A2F6B719200573309 /* SmoothGradientUIKit in Frameworks */ = {isa = PBXBuildFile; productRef = AADF70392F6B719200573309 /* SmoothGradientUIKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		AADF70082F6A326A00573309 /* YKAnimationProbe.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YKAnimationProbe.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AADF703A2F6B719200573309 /* SmoothGradientUIKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +83,7 @@
 			);
 			name = YKAnimationProbe;
 			packageProductDependencies = (
+				AADF70392F6B719200573309 /* SmoothGradientUIKit */,
 			);
 			productName = YKAnimationProbe;
 			productReference = AADF70082F6A326A00573309 /* YKAnimationProbe.app */;
@@ -107,6 +113,9 @@
 			);
 			mainGroup = AADF6FFF2F6A326A00573309;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AADF70382F6B719200573309 /* XCRemoteSwiftPackageReference "Smooth-Gradient" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AADF70092F6A326A00573309 /* Products */;
 			projectDirPath = "";
@@ -341,6 +350,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AADF70382F6B719200573309 /* XCRemoteSwiftPackageReference "Smooth-Gradient" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/LCOOOOD/Smooth-Gradient";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AADF70392F6B719200573309 /* SmoothGradientUIKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AADF70382F6B719200573309 /* XCRemoteSwiftPackageReference "Smooth-Gradient" */;
+			productName = SmoothGradientUIKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AADF70002F6A326A00573309 /* Project object */;
 }

@@ -1,0 +1,15 @@
+{
+  "originHash" : "199747466dd3efa02b72d1dde58462df83cc53aca9388db8a030463434b9823b",
+  "pins" : [
+    {
+      "identity" : "smooth-gradient",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/LCOOOOD/Smooth-Gradient",
+      "state" : {
+        "branch" : "main",
+        "revision" : "bf8ba965386378528666c11842a58912ed299fe9"
+      }
+    }
+  ],
+  "version" : 3
+}

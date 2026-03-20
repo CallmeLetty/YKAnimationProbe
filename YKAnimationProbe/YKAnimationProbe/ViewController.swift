@@ -7,12 +7,13 @@
 
 import SwiftUI
 import UIKit
+import SmoothGradientUIKit
 
 class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        let host = UIHostingController(rootView: AnimationShowcaseRoot())
+        let host = UIHostingController(rootView: RootTabView())
         host.view.backgroundColor = .systemBackground
         addChild(host)
         host.view.translatesAutoresizingMaskIntoConstraints = false
@@ -24,5 +25,28 @@ class ViewController: UIViewController {
             host.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         host.didMove(toParent: self)
+    }
+}
+
+private struct RootTabView: View {
+    var body: some View {
+        TabView {
+            AnimationShowcaseRoot()
+                .tabItem {
+                    Label("Animation", systemImage: "sparkles")
+                }
+
+            NavigationStack {
+                ChartVisualizationDemo()
+            }
+            .tabItem {
+                Label("Charts", systemImage: "chart.bar.xaxis")
+            }
+
+            ThirdTabWaterfallDemo()
+                .tabItem {
+                    Label("Smooth", systemImage: "ellipsis.circle")
+                }
+        }
     }
 }
