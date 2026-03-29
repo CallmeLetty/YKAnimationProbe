@@ -10,12 +10,17 @@ import SwiftUI
 // MARK: - 金币掉落（显式 m, k, c）
 struct CoinBounceDemo: View {
     @State private var restingY: CGFloat = 0
+    @State private var isAnimating = false
+
+    private let groundY: CGFloat = 100
 
     /// 控制点：较高刚度 + 适中阻尼 → 落地会「弹几下」再稳
+    /// stiffness 再低一点，弹跳会更软
+    /// damping 再小一点，地面弹的次数会更多。
     private let landSpring = Animation.interpolatingSpring(
         mass: 1.0,
-        stiffness: 520,
-        damping: 28
+        stiffness: 220,
+        damping: 12
     )
 
     var body: some View {
@@ -37,16 +42,28 @@ struct CoinBounceDemo: View {
                     .foregroundStyle(.yellow.gradient)
                     .shadow(radius: 2)
                     .offset(y: restingY)
-                    .animation(landSpring, value: restingY)
             }
             .frame(height: 280)
             .frame(maxWidth: .infinity)
             .background(RoundedRectangle(cornerRadius: 16).fill(.gray.opacity(0.08)))
 
             Button("掉落一枚") {
-                restingY = -220
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    restingY = 0
+                guard !isAnimating else { return }
+                isAnimating = true
+
+                Task { @MainActor in
+                    withAnimation(landSpring) {
+                        restingY = groundY
+                    }
+
+                    try? await Task.sleep(nanoseconds: 1_300_000_000)
+
+                    withAnimation(.easeInOut(duration: 0.45)) {
+                        restingY = 0
+                    }
+
+                    try? await Task.sleep(nanoseconds: 450_000_000)
+                    isAnimating = false
                 }
             }
             .buttonStyle(.borderedProminent)
