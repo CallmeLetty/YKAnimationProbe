@@ -47,6 +47,11 @@ private struct RootTabView: View {
                 .tabItem {
                     Label("Smooth", systemImage: "ellipsis.circle")
                 }
+
+            SpectacleTabDemo()
+                .tabItem {
+                    Label("Spectacle", systemImage: "wand.and.stars")
+                }
         }
     }
 }
