@@ -11,6 +11,7 @@ struct SpectacleTabDemo: View {
     @State private var selectedScene: SpectacleScene = .aurora
     @State private var pulseTrigger = 0
     @State private var isPulseActive = false
+    @State private var pulseResetTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -38,6 +39,9 @@ struct SpectacleTabDemo: View {
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
+        }
+        .onDisappear {
+            pulseResetTask?.cancel()
         }
     }
 
@@ -198,10 +202,12 @@ struct SpectacleTabDemo: View {
     }
 
     private func triggerPulse() {
+        pulseResetTask?.cancel()
         pulseTrigger += 1
         isPulseActive = true
 
-        Task { @MainActor in
+        // 只保留最后一次 pulse 的复位任务，避免快速连点时旧任务截断新动画。
+        pulseResetTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(520))
             isPulseActive = false
         }

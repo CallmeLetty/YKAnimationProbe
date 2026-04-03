@@ -51,19 +51,15 @@ struct CoinBounceDemo: View {
                 guard !isAnimating else { return }
                 isAnimating = true
 
-                Task { @MainActor in
-                    withAnimation(landSpring) {
-                        restingY = groundY
-                    }
-
-                    try? await Task.sleep(nanoseconds: 1_300_000_000)
-
-                    withAnimation(.easeInOut(duration: 0.45)) {
+                // 跟随动画逻辑完成，而不是依赖固定 sleep 时长。
+                withAnimation(landSpring, completionCriteria: .logicallyComplete) {
+                    restingY = groundY
+                } completion: {
+                    withAnimation(.easeInOut(duration: 0.45), completionCriteria: .logicallyComplete) {
                         restingY = 0
+                    } completion: {
+                        isAnimating = false
                     }
-
-                    try? await Task.sleep(nanoseconds: 450_000_000)
-                    isAnimating = false
                 }
             }
             .buttonStyle(.borderedProminent)

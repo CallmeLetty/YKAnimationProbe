@@ -75,6 +75,15 @@ private struct HourlyScreenRow: Identifiable {
 // MARK: - 入口（从列表导航）
 
 struct ChartVisualizationDemo: View {
+    @State private var selectedWeatherDate: Date?
+    @State private var weatherReveal: CGFloat = 1
+    @State private var weatherReplayTask: Task<Void, Never>?
+    @State private var selectedHour: Int?
+    @State private var selectedAppCategory: String?
+    @State private var piePulse = false
+    @State private var piePulseTask: Task<Void, Never>?
+    @State private var useDownsample = true
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
@@ -90,12 +99,18 @@ struct ChartVisualizationDemo: View {
         }
         .navigationTitle("Charts 可视化")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if weatherReveal == 1 {
+                replayWeatherAnimation()
+            }
+        }
+        .onDisappear {
+            weatherReplayTask?.cancel()
+            piePulseTask?.cancel()
+        }
     }
 
     // MARK: 天气：折线 + 区域 + 横向选中
-
-    @State private var selectedWeatherDate: Date?
-    @State private var weatherAnimate = false
 
     @ViewBuilder
     private func weatherLineSection() -> some View {
@@ -108,74 +123,81 @@ struct ChartVisualizationDemo: View {
                 .foregroundStyle(.secondary)
 
             let avgHigh = samples.map(\.highC).reduce(0, +) / Double(max(samples.count, 1))
-            Chart {
-                RuleMark(y: .value("均高", avgHigh))
-                    .foregroundStyle(.secondary.opacity(0.5))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [6, 4]))
-                    .annotation(position: .top, alignment: .trailing) {
-                        Text("周均高 \(Int(avgHigh))°")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                ForEach(samples) { s in
-                    AreaMark(
-                        x: .value("日", s.date),
-                        y: .value("最高", s.highC)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.orange.opacity(0.45), .orange.opacity(0.08)],
-                            startPoint: .top,
-                            endPoint: .bottom
+            GeometryReader { proxy in
+                Chart {
+                    RuleMark(y: .value("均高", avgHigh))
+                        .foregroundStyle(.secondary.opacity(0.5))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [6, 4]))
+                        .annotation(position: .top, alignment: .trailing) {
+                            Text("周均高 \(Int(avgHigh))°")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    ForEach(samples) { s in
+                        AreaMark(
+                            x: .value("日", s.date),
+                            y: .value("最高", s.highC)
                         )
-                    )
-                    .interpolationMethod(.catmullRom)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.orange.opacity(0.45), .orange.opacity(0.08)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .interpolationMethod(.catmullRom)
 
-                    LineMark(
-                        x: .value("日", s.date),
-                        y: .value("最高", s.highC)
-                    )
-                    .foregroundStyle(.orange)
-                    .lineStyle(StrokeStyle(lineWidth: weatherAnimate ? 3 : 1))
-                    .interpolationMethod(.catmullRom)
-                    .symbol(.circle)
-                    .symbolSize(selectedWeatherDate.map { Calendar.current.isDate($0, inSameDayAs: s.date) ? 120 : 40 } ?? 40)
+                        LineMark(
+                            x: .value("日", s.date),
+                            y: .value("最高", s.highC)
+                        )
+                        .foregroundStyle(.orange)
+                        .lineStyle(StrokeStyle(lineWidth: 3))
+                        .interpolationMethod(.catmullRom)
+                        .symbol(.circle)
+                        .symbolSize(selectedWeatherDate.map { Calendar.current.isDate($0, inSameDayAs: s.date) ? 120 : 40 } ?? 40)
 
-                    LineMark(
-                        x: .value("日", s.date),
-                        y: .value("最低", s.lowC)
-                    )
-                    .foregroundStyle(.cyan)
-                    .interpolationMethod(.catmullRom)
+                        LineMark(
+                            x: .value("日", s.date),
+                            y: .value("最低", s.lowC)
+                        )
+                        .foregroundStyle(.cyan)
+                        .interpolationMethod(.catmullRom)
+                    }
                 }
+                // 遮罩宽度随状态增长，做出真正的“从左到右重绘”。
+                .mask(alignment: .leading) {
+                    Rectangle()
+                        .frame(width: max(1, proxy.size.width * weatherReveal))
+                }
+                .chartXSelection(value: $selectedWeatherDate)
+                .chartXAxis {
+                    AxisMarks(values: samples.map(\.date)) { val in
+                        if let d = val.as(Date.self) {
+                            AxisValueLabel {
+                                Text(d, format: .dateTime.weekday(.narrow))
+                            }
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .leading) { v in
+                        AxisGridLine()
+                        AxisValueLabel {
+                            if let n = v.as(Double.self) {
+                                Text("\(Int(n))°")
+                            }
+                        }
+                    }
+                }
+                .chartForegroundStyleScale([
+                    "最高": Color.orange,
+                    "最低": Color.cyan
+                ])
+                .accessibilityLabel("一周气温趋势图")
+                .accessibilityHint("左右滑动可选中某一天")
             }
             .frame(height: 220)
-            .chartXSelection(value: $selectedWeatherDate)
-            .chartXAxis {
-                AxisMarks(values: samples.map(\.date)) { val in
-                    if let d = val.as(Date.self) {
-                        AxisValueLabel {
-                            Text(d, format: .dateTime.weekday(.narrow))
-                        }
-                    }
-                }
-            }
-            .chartYAxis {
-                AxisMarks(position: .leading) { v in
-                    AxisGridLine()
-                    AxisValueLabel {
-                        if let n = v.as(Double.self) {
-                            Text("\(Int(n))°")
-                        }
-                    }
-                }
-            }
-            .chartForegroundStyleScale([
-                "最高": Color.orange,
-                "最低": Color.cyan
-            ])
-            .accessibilityLabel("一周气温趋势图")
-            .accessibilityHint("左右滑动可选中某一天")
 
             if let d = selectedWeatherDate,
                let hit = samples.first(where: { Calendar.current.isDate($0.date, inSameDayAs: d) }) {
@@ -194,10 +216,7 @@ struct ChartVisualizationDemo: View {
             }
 
             Button("重播线条动画") {
-                weatherAnimate = false
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
-                    weatherAnimate = true
-                }
+                replayWeatherAnimation()
             }
             .buttonStyle(.bordered)
         }
@@ -206,8 +225,6 @@ struct ChartVisualizationDemo: View {
     }
 
     // MARK: App 使用：柱状 + 选中动画
-
-    @State private var selectedHour: Int?
 
     @ViewBuilder
     private func appBarSection() -> some View {
@@ -248,9 +265,6 @@ struct ChartVisualizationDemo: View {
 
     // MARK: 饼图 / 扇区 + 角度选中
 
-    @State private var selectedAppCategory: String?
-    @State private var piePulse = false
-
     @ViewBuilder
     private func appPieSection() -> some View {
         let slices = Self.appCategorySlices()
@@ -280,8 +294,12 @@ struct ChartVisualizationDemo: View {
             .scaleEffect(piePulse ? 1.03 : 1)
             .animation(.spring(response: 0.35, dampingFraction: 0.65), value: piePulse)
             .onChange(of: selectedAppCategory) { _, new in
+                piePulseTask?.cancel()
                 piePulse = new != nil
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                guard new != nil else { return }
+
+                piePulseTask = Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(180))
                     piePulse = false
                 }
             }
@@ -297,8 +315,6 @@ struct ChartVisualizationDemo: View {
     }
 
     // MARK: 大数据：降采样对比
-
-    @State private var useDownsample = true
     private static let rawSeriesLength = 4_000
 
     @ViewBuilder
@@ -388,6 +404,18 @@ struct ChartVisualizationDemo: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func replayWeatherAnimation() {
+        weatherReplayTask?.cancel()
+        weatherReveal = 0
+
+        weatherReplayTask = Task { @MainActor in
+            await Task.yield()
+            withAnimation(.easeOut(duration: 0.9)) {
+                weatherReveal = 1
+            }
+        }
     }
 
     // MARK: - 静态数据与工具

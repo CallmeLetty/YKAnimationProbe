@@ -55,12 +55,14 @@ struct AddToCartParabolaContent: View {
     }
 
     private func launchFlight() {
+        guard !isFlying else { return }
+
         isFlying = true
         flyProgress = 0
-        withAnimation(.timingCurve(0.2, 0.9, 0.15, 1.0, duration: 0.58)) {
+        // 用动画完成回调收尾，避免连点或调参后被写死延时打断。
+        withAnimation(.timingCurve(0.2, 0.9, 0.15, 1.0, duration: 0.58), completionCriteria: .logicallyComplete) {
             flyProgress = 1
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.58) {
+        } completion: {
             isFlying = false
             flyProgress = 0
             cartNudge += 1

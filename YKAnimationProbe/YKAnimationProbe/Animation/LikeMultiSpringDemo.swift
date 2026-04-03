@@ -19,7 +19,8 @@ struct LikeMultiSpringDemo: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            PhaseAnimator(LikePhase.allCases, trigger: burst) { phase in
+            // 点赞和取消点赞用不同相位序列，避免“取消也像庆祝”。
+            PhaseAnimator(liked ? LikePhase.likeSequence : LikePhase.unlikeSequence, trigger: burst) { phase in
                 Image(systemName: liked ? "heart.fill" : "heart")
                     .font(.system(size: 72))
                     .foregroundStyle(liked ? Color.red.gradient : Color.gray.gradient)
@@ -57,11 +58,14 @@ struct LikeMultiSpringDemo: View {
 private enum LikePhase: CaseIterable, Equatable {
     case neutral, blowUp, shrink, settle
 
+    static let likeSequence: [LikePhase] = [.neutral, .blowUp, .shrink, .settle]
+    static let unlikeSequence: [LikePhase] = [.neutral, .shrink, .settle]
+
     var scale: CGFloat {
         switch self {
         case .neutral: return 1.0
-        case .blowUp: return 2
-        case .shrink: return 0.5
+        case .blowUp: return 1.8
+        case .shrink: return 0.78
         case .settle: return 1.0
         }
     }
