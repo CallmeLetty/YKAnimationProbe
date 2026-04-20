@@ -83,6 +83,9 @@ struct AnimationShowcaseRoot: View {
                 NavigationLink("📖 阅读器 / AI 消息 · MD · 代码 · 公式") {
                     AdvancedReaderRendererDemo()
                 }
+                NavigationLink("🐍 Snake · 经典网格循环") {
+                    SnakeGameDemo()
+                }
                 Section {
                     TheoryNotesExpandable()
                 } header: {
